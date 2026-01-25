@@ -27,7 +27,7 @@ const Color ARROW_COL = RED;
 const Color PARTICLE_COL = GREEN;
 
 const float INITIAL_VEL = (rand() % 10) - 5;
-const double VEL_SCALE = 0.00000000001;
+const double VEL_SCALE = 0.000000000001;
 
 class GridPoint {
     public:   
@@ -81,8 +81,8 @@ class FluidGrid {
     void apply_forces() {
         for (int i = 0; i < GRID_WIDTH-1; i+=1) {
             for (int j = 1; j < GRID_HEIGHT-1; j+=2){
-                cells[i][j].v += (rand() % 100) - 200;
-                //cells[i][j].v += GRAVITY*10;
+                //cells[i][j].v += (rand() % 100) - 200;
+                cells[i][j].v -= GRAVITY*5;
             }
         }
     }
@@ -141,7 +141,7 @@ class FluidGrid {
                     printf("%f\n", u);
                     cells[i][j].v = u*TIMESTEP*VEL_SCALE;
                 }
-                DrawCircleV(pos, 5, PARTICLE_COL);
+                DrawCircleV(pos, 30, PARTICLE_COL);
             }
         }
     }
@@ -168,6 +168,7 @@ class FluidGrid {
     }
 
     void update() {
+        //advect_particles();
         apply_forces();
         force_incompressable();
         advect_particles();
@@ -188,9 +189,9 @@ int main() {
         //grid.draw_grid(true, true, true);
         grid.update();
 
-        mpos = GetMousePosition();
-        if (IsKeyDown(KEY_A)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v -= 10000;
-        if (IsKeyDown(KEY_D)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v += 10000;
+        //mpos = GetMousePosition();
+        //if (IsKeyDown(KEY_A)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v -= 10000;
+        //if (IsKeyDown(KEY_D)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v += 10000;
 
         DrawFPS(30, 30);
         EndDrawing();
