@@ -11,7 +11,7 @@ const char* WIN_NAME = "Fluid Sim";
 const int FPS = 60;
 const float TIMESTEP = (1 / (float)FPS);
 
-const int GRID_WIDTH = 20;
+const int GRID_WIDTH = 30;
 const int GRID_HEIGHT = 20;
 const int GRID_SPACING_X = (WIDTH / GRID_WIDTH);
 const int GRID_SPACING_Y = (HEIGHT / GRID_HEIGHT);
@@ -27,7 +27,7 @@ const Color ARROW_COL = RED;
 const Color PARTICLE_COL = GREEN;
 
 const float INITIAL_VEL = (rand() % 10) - 5;
-const double VEL_SCALE = 0.000000000001;
+const double VEL_SCALE = 1;
 
 class GridPoint {
     public:   
@@ -40,7 +40,7 @@ class GridPoint {
     float d = 0;
     float s = 1;
 
-    void init(Vector2 position) {
+    void init(Vector2 position, bool edge_boundries) {
         //calculate the cell's position on screen from it's array position
         grid_pos = position;
         screen_pos.x = (GRID_SPACING_X * position.x);
@@ -50,7 +50,7 @@ class GridPoint {
         is_v_vertical = ((int)position.y % 2);
         if (is_v_vertical) screen_pos.x += GRID_SPACING_X/2;
         //mark cells on the outside as bariers with no velocity
-        if ((grid_pos.x == 0 || grid_pos.x == GRID_WIDTH) || (grid_pos.y == 0 || grid_pos.y == GRID_HEIGHT)){
+        if ((grid_pos.x == 0 || grid_pos.x == GRID_WIDTH-1 || grid_pos.y == 0 || grid_pos.y == GRID_HEIGHT-1) && edge_boundries){
             s = 0;
             v = 0;
         }
@@ -77,15 +77,6 @@ class GridPoint {
 
 class FluidGrid {
     private:
-
-    void apply_forces() {
-        for (int i = 0; i < GRID_WIDTH-1; i+=1) {
-            for (int j = 1; j < GRID_HEIGHT-1; j+=2){
-                //cells[i][j].v += (rand() % 100) - 200;
-                cells[i][j].v -= GRAVITY*5;
-            }
-        }
-    }
 
     void force_incompressable() {
         float d, s;
@@ -138,10 +129,10 @@ class FluidGrid {
                 
                 if (cells[i-1][j+1].is_v_vertical){
                     u = cells[i-1][j-1].v*w00*w10 + cells[i+1][j-1].v*w01*w10 + cells[i-1][j+1].v*w01*w11 + cells[i+1][j+1].v*w00*w11;
-                    printf("%f\n", u);
+                    //printf("%f\n", u);
                     cells[i][j].v = u*TIMESTEP*VEL_SCALE;
                 }
-                DrawCircleV(pos, 30, PARTICLE_COL);
+                DrawCircleV(pos, 8, PARTICLE_COL);
             }
         }
     }
@@ -149,11 +140,32 @@ class FluidGrid {
     public:
     GridPoint cells[GRID_WIDTH][GRID_HEIGHT];
 
-    FluidGrid() {
+    void apply_random_force() {
+        for (int i = 0; i < GRID_WIDTH-1; i+=1) {
+            for (int j = 1; j < GRID_HEIGHT-1; j+=2){
+                cells[i][j].v += (rand() % 100) - 200;
+            }
+        }
+    }
+
+    void apply_mouse(){
+        const int MOUSE_VEL = 1000;
+        Vector2 mpos = GetMousePosition();
+        if (IsKeyDown(KEY_A)) cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v -= MOUSE_VEL;
+        if (IsKeyDown(KEY_D)) cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v += MOUSE_VEL;
+    }
+
+    void apple_edge_force(){
+        for (int i = 0; i < GRID_HEIGHT-1; i++){
+            cells[GRID_WIDTH-1][i].v += 100; 
+        }
+    }
+
+    FluidGrid(bool edge_boundries) {
         //initialise all the grid cells
         for (int i = 0; i < GRID_WIDTH; i++) {
             for (int j = 0; j < GRID_HEIGHT; j++){
-                cells[i][j].init((Vector2){(float)i, (float)j});
+                cells[i][j].init((Vector2){(float)i, (float)j}, edge_boundries);
             }
         }
     }
@@ -168,31 +180,71 @@ class FluidGrid {
     }
 
     void update() {
-        //advect_particles();
-        apply_forces();
         force_incompressable();
         advect_particles();
     }
 };
+
+//macro to easily set a float uniform from its name
+int set_uniform(const char* name ,float value, Shader s){
+    int loc = GetShaderLocation(s, name);
+    if (loc == -1) { 
+        printf("Could not find uniform \"%s\"\n", name);
+        return -1;
+    }
+    const float valc[1] = {value};
+    SetShaderValue(s, loc, valc, SHADER_ATTRIB_FLOAT);
+    return loc;
+}
+
+bool use_edges = false;
+FluidGrid grid(use_edges);
+Shader s;
+
+void toggle_edge(){
+    if (IsKeyPressed(KEY_E)){
+        use_edges = !use_edges;
+        grid = FluidGrid(use_edges);
+    }
+}
+
+void reset(){
+    if (IsKeyPressed(KEY_R)) grid = FluidGrid(use_edges);
+}
 
 int main() {
     InitWindow(WIDTH, HEIGHT, WIN_NAME);
     ToggleFullscreen();
     SetTargetFPS(FPS);
     srand(clock());
-    FluidGrid grid;
     Vector2 mpos;
+
+    for (int i = 5; i < GRID_WIDTH-5; i+=1) {
+        for (int j = 8; j < GRID_HEIGHT-8; j+=1){
+            //grid.cells[i][j].s = 0;
+            //grid.cells[i][j].v = 0;
+        }
+    }
+
+    s = LoadShader(NULL, "colours.fs");
+    if (!IsShaderValid(s)) { return 1; }
+
+    set_uniform("u_width", WIDTH, s);
+    set_uniform("u_height", HEIGHT, s);
 
     while (!WindowShouldClose()){
         BeginDrawing();
         ClearBackground(BLACK);
+        //BeginShaderMode(s);;
         //grid.draw_grid(true, true, true);
         grid.update();
+        toggle_edge();
+        reset();
+        //grid.apply_random_force();
+        grid.apply_mouse();
+        //grid.apple_edge_force();
 
-        //mpos = GetMousePosition();
-        //if (IsKeyDown(KEY_A)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v -= 10000;
-        //if (IsKeyDown(KEY_D)) grid.cells[(int)mpos.x/GRID_SPACING_X][(int)mpos.y/GRID_SPACING_Y].v += 10000;
-
+        //EndShaderMode();
         DrawFPS(30, 30);
         EndDrawing();
     }
