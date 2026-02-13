@@ -1,6 +1,17 @@
 
 #include "Fluid.h"
 
+int set_uniform(const char* name ,float value, Shader s){
+    int loc = GetShaderLocation(s, name);
+    if (loc == -1) { 
+        printf("Could not find uniform \"%s\"\n", name);
+        return -1;
+    }
+    const float valc[1] = {value};
+    SetShaderValue(s, loc, valc, SHADER_ATTRIB_FLOAT);
+    return loc;
+}
+
 void  GridPoint::init(Vector2 position, bool edge_boundries) {
     //calculate the cell's position on screen from it's array position
     grid_pos = position;
@@ -57,6 +68,11 @@ void FluidGrid::force_incompressable() {
     }
 }
 
+void FluidGrid::draw_particle(Vector2 pos, float v) {
+    DrawCircleV(pos, 10, PARTICLE_COL);
+    if(use_shaders) set_uniform("u_scale", v, s);
+}
+
 void FluidGrid::advect_particles() {
     Vector2 v;
     Vector2 pos;
@@ -89,16 +105,14 @@ void FluidGrid::advect_particles() {
                 //printf("%f\n", u);
                 cells[i][j].v = u*TIMESTEP*VEL_SCALE;
             }
-            DrawCircleV(pos, 8, PARTICLE_COL);
+            draw_particle(pos, u);
         }
     }
 }
 
-GridPoint cells[GRID_WIDTH][GRID_HEIGHT];
-
 void FluidGrid::apply_random_force() {
     for (int i = 0; i < GRID_WIDTH-1; i+=1) {
-        for (int j = 1; j < GRID_HEIGHT-1; j+=2){
+        for (int j = 1; j < GRID_HEIGHT-1; j+=1){
             cells[i][j].v += (rand() % 100) - 200;
         }
     }
@@ -117,7 +131,16 @@ void FluidGrid::apple_edge_force(){
     }
 }
 
-FluidGrid::FluidGrid(bool edge_boundries) {
+void FluidGrid::init(const bool edge_boundries, const char* shader_name){ 
+    //setup shader
+    s = LoadShader(NULL, shader_name);
+    if (!IsShaderValid(s)) { 
+        printf("Failed to load shader: %s", shader_name);
+        use_shaders = false;
+    } else {
+        set_uniform("u_width", WIDTH, s);
+        set_uniform("u_height", HEIGHT, s);
+    }
     //initialise all the grid cells
     for (int i = 0; i < GRID_WIDTH; i++) {
         for (int j = 0; j < GRID_HEIGHT; j++){
@@ -136,6 +159,8 @@ void FluidGrid::draw_grid(bool draw_grid_lines, bool draw_arrows, bool draw_text
 }
 
 void FluidGrid::update() {
+    if(use_shaders) BeginShaderMode(s);
     force_incompressable();
     advect_particles();
+    if(use_shaders) EndShaderMode();
 }
