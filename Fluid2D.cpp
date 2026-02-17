@@ -134,11 +134,20 @@ void FluidGrid::apple_edge_force(){
     }
 }
 
-void FluidGrid::init(const bool edge_boundries, const char* shader_name){ 
+void FluidGrid::reset(){
+    //initialise all the grid cells
+    for (int i = 0; i < GRID_WIDTH; i++) {
+        for (int j = 0; j < GRID_HEIGHT; j++){
+            cells[i][j].init((Vector2){(float)i, (float)j}, true);
+        }
+    }
+}
+
+void FluidGrid::init(const bool edge_boundries, const char* fragment_shader, const char* vertex_shader){ 
     //setup shader
-    s = LoadShader(0, shader_name);
+    s = LoadShader(vertex_shader, fragment_shader);
     if (!IsShaderValid(s)) { 
-        printf("Failed to load shader: %s", shader_name);
+        printf("Failed to load shaders: %s, %s", fragment_shader, vertex_shader);
         use_shaders = false;
     } else {
         int x = get_uniform("u_width", s);

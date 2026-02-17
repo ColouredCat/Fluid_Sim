@@ -5,13 +5,19 @@
 #include <stdbool.h>
 #include <time.h>
 
-const int WIDTH = 1920;
-const int HEIGHT = 1080;
+#if defined(PLATFORM_WEB)
+    const int WIDTH = 1600;
+    const int HEIGHT = 900;
+#else
+    const int WIDTH = 1980;
+    const int HEIGHT = 1080;
+#endif
+
 const int FPS = 60;
 const float TIMESTEP = (1 / (float)FPS);
 
 const int GRID_WIDTH = 60;
-const int GRID_HEIGHT = 60;
+const int GRID_HEIGHT = 40;
 const int GRID_SPACING_X = (WIDTH / GRID_WIDTH);
 const int GRID_SPACING_Y = (HEIGHT / GRID_HEIGHT);
 
@@ -62,7 +68,8 @@ class FluidGrid {
     void apply_random_force() ;
     void apply_mouse() ;
     void apple_edge_force() ;
-    void init(const bool edge_boundries, const char* shader_name);
+    void init(const bool edge_boundries, const char* fragment_shader, const char* vertex_shader);
+    void reset();
     void draw_grid(bool draw_grid_lines, bool draw_arrows, bool draw_text) ;
     void update() ;
 };
