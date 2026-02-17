@@ -1,15 +1,18 @@
 
 #include "Fluid.h"
 
-int set_uniform(const char* name ,float value, Shader s){
+int get_uniform(const char* name, Shader s){
     int loc = GetShaderLocation(s, name);
     if (loc == -1) { 
         printf("Could not find uniform \"%s\"\n", name);
         return -1;
     }
+    return loc;
+}
+
+void set_uniform(int loc, float value, Shader s){
     const float valc[1] = {value};
     SetShaderValue(s, loc, valc, SHADER_ATTRIB_FLOAT);
-    return loc;
 }
 
 void  GridPoint::init(Vector2 position, bool edge_boundries) {
@@ -69,8 +72,8 @@ void FluidGrid::force_incompressable() {
 }
 
 void FluidGrid::draw_particle(Vector2 pos, float v) {
-    DrawCircleV(pos, 10, PARTICLE_COL);
-    if(use_shaders) set_uniform("u_scale", v, s);
+    DrawCircleV(pos, 5, PARTICLE_COL);
+    if(use_shaders) set_uniform(loc, v, s);
 }
 
 void FluidGrid::advect_particles() {
@@ -133,14 +136,17 @@ void FluidGrid::apple_edge_force(){
 
 void FluidGrid::init(const bool edge_boundries, const char* shader_name){ 
     //setup shader
-    s = LoadShader(NULL, shader_name);
+    s = LoadShader(0, shader_name);
     if (!IsShaderValid(s)) { 
         printf("Failed to load shader: %s", shader_name);
         use_shaders = false;
     } else {
-        set_uniform("u_width", WIDTH, s);
-        set_uniform("u_height", HEIGHT, s);
+        int x = get_uniform("u_width", s);
+        int y = get_uniform("u_height", s);
+        set_uniform(x, WIDTH, s);
+        set_uniform(y, HEIGHT, s);
     }
+    loc = get_uniform("u_scale", s);
     //initialise all the grid cells
     for (int i = 0; i < GRID_WIDTH; i++) {
         for (int j = 0; j < GRID_HEIGHT; j++){

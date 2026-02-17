@@ -1,6 +1,4 @@
 
-#ifndef FLUID
-#define FLUID
 #include <stdio.h>
 #include <stdlib.h>
 #include "raylib.h"
@@ -12,8 +10,8 @@ const int HEIGHT = 1080;
 const int FPS = 60;
 const float TIMESTEP = (1 / (float)FPS);
 
-const int GRID_WIDTH = 40;
-const int GRID_HEIGHT = 40;
+const int GRID_WIDTH = 60;
+const int GRID_HEIGHT = 60;
 const int GRID_SPACING_X = (WIDTH / GRID_WIDTH);
 const int GRID_SPACING_Y = (HEIGHT / GRID_HEIGHT);
 
@@ -30,7 +28,8 @@ const Color PARTICLE_COL = GREEN;
 const float INITIAL_VEL = (rand() % 10) - 5;
 const double VEL_SCALE = 1;
 
-int set_uniform(const char* name ,float value, Shader s);
+void set_uniform(int loc, Shader s);
+int get_uniform(const char* name ,float value, Shader s);
 
 class GridPoint {
     public:   
@@ -57,6 +56,7 @@ class FluidGrid {
     public:
     GridPoint cells[GRID_WIDTH][GRID_HEIGHT];
     Shader s;
+    int loc;
     bool use_shaders = true;
 
     void apply_random_force() ;
@@ -66,4 +66,3 @@ class FluidGrid {
     void draw_grid(bool draw_grid_lines, bool draw_arrows, bool draw_text) ;
     void update() ;
 };
-#endif
