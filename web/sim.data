@@ -38,23 +38,19 @@ void main(){
     float mul = (distance(vec2(u_mouse_x, u_mouse_y), gl_FragCoord.xy)/max)/max;
     vec2 st = (gl_FragCoord.xy/u_width) * abs(u_scale)*0.001f;
     outColor = vec4(st, fragColor.z, fragColor.a);
-}
-//default from raylib examples
-#version 330 core
+}#version 330 core
 
-// Input vertex attributes
+//default from raylib examples
+
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
 in vec4 vertexColor;
 
-// Input uniform values
 uniform mat4 mvp;
 
-// Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
 out vec4 fragColor;
-
 
 void main()
 {
@@ -65,19 +61,15 @@ void main()
 
 //default from raylib examples
 
-// Input vertex attributes
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
 in vec4 vertexColor;
 
-// Input uniform values
 uniform mat4 mvp;
 
-// Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
 out vec4 fragColor;
-
 
 void main()
 {

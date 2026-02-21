@@ -1,20 +1,16 @@
-
-//default from raylib examples
 #version 330 core
 
-// Input vertex attributes
+//default from raylib examples
+
 in vec3 vertexPosition;
 in vec2 vertexTexCoord;
 in vec3 vertexNormal;
 in vec4 vertexColor;
 
-// Input uniform values
 uniform mat4 mvp;
 
-// Output vertex attributes (to fragment shader)
 out vec2 fragTexCoord;
 out vec4 fragColor;
-
 
 void main()
 {

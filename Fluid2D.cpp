@@ -1,4 +1,10 @@
 
+/*
+Fluid2D.cpp
+A simple grid-based eulerian fluid simulator
+By Robert Jordan
+*/
+
 #include "Fluid.h"
 
 int get_uniform(const char* name, Shader s){
@@ -56,8 +62,8 @@ void FluidGrid::force_incompressable() {
         //update all cells, ignoring the outermost ones
         for (int i = 0; i < GRID_WIDTH-1; i+=1) {
             for (int j = 1; j < GRID_HEIGHT-1; j+=1){
-                /*step 1 : force incompressability by calculating the divergence, 
-                i.e how much fluid is flowing in an out of the cell*/
+                //force incompressability by calculating the divergence, 
+                //i.e how much fluid is flowing in an out of the cell
                 d = OVERRELAX * (cells[i+1][j].v - cells[i][j].v + cells[i][j+1].v - cells[i][j-1].v);
                 cells[i][j].d = d;
                 s = cells[i+1][j].s + cells[i][j].s + cells[i][j+1].s + cells[i][j-1].s;
